@@ -52,16 +52,9 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
 bool CBS_cbs_get_u16(CBS_cbs_t *cbs, uint16_t *out)
 {
   uint32_t num[1U] = { (uint32_t)0U };
-  bool uu____314 = CBS_cbs_get_u(cbs, num, (uint32_t)2U);
-  bool rv;
-  if (uu____314)
-  {
-    uint32_t num0 = num[0U];
-    out[0U] = (uint16_t)num0;
-    rv = true;
-  }
-  else
-    rv = false;
+  bool rv = CBS_cbs_get_u(cbs, num, (uint32_t)2U);
+  uint32_t num0 = num[0U];
+  out[0U] = (uint16_t)num0;
   return rv;
 }
 
