@@ -21,10 +21,10 @@ bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
       CBS_cbs_t scrut = cbs0;
       uint8_t *data = scrut.data;
       uint8_t bi = data[i];
-      uint32_t uu____209 = out[0U];
-      uint32_t uu____208 = uu____209 << (uint32_t)8U;
-      uint32_t uu____207 = uu____208 | (uint32_t)bi;
-      out[0U] = uu____207;
+      uint32_t uu____211 = out[0U];
+      uint32_t uu____210 = uu____211 << (uint32_t)8U;
+      uint32_t uu____209 = uu____210 | (uint32_t)bi;
+      out[0U] = uu____209;
     }
     return true;
   }
@@ -41,12 +41,28 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
   {
     CBS_cbs_t scrut = cbs0;
     uint8_t *data = scrut.data;
-    uint8_t uu____260 = data[0U];
-    out[0U] = uu____260;
+    uint8_t uu____262 = data[0U];
+    out[0U] = uu____262;
     return true;
   }
   else
     return false;
+}
+
+bool CBS_cbs_get_u16(CBS_cbs_t *cbs, uint16_t *out)
+{
+  uint32_t num[1U] = { (uint32_t)0U };
+  bool uu____314 = CBS_cbs_get_u(cbs, num, (uint32_t)2U);
+  bool rv;
+  if (uu____314)
+  {
+    uint32_t num0 = num[0U];
+    out[0U] = (uint16_t)num0;
+    rv = true;
+  }
+  else
+    rv = false;
+  return rv;
 }
 
 bool CBS_cbs_get_u24(CBS_cbs_t *cbs, uint32_t *out)
