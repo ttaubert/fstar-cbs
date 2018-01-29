@@ -2,23 +2,11 @@
 
 #include "CBS.h"
 
-bool CBS_uu___is_MkCBS(CBS_cbs_t projectee)
+uint8_t FStar_Seq_Properties_last__uint8_t(void *s)
 {
-  return true;
-}
-
-uint8_t *CBS___proj__MkCBS__item__data(CBS_cbs_t projectee)
-{
-  CBS_cbs_t scrut = projectee;
-  uint8_t *data = scrut.data;
-  return data;
-}
-
-uint32_t CBS___proj__MkCBS__item__len(CBS_cbs_t projectee)
-{
-  CBS_cbs_t scrut = projectee;
-  uint32_t len = scrut.len;
-  return len;
+  return
+    FStar_Seq_Base_index(s,
+      Prims_op_Subtraction(FStar_Seq_Base_length(s), (krml_checked_int_t)1));
 }
 
 bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
@@ -33,10 +21,11 @@ bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
       CBS_cbs_t scrut = cbs0;
       uint8_t *data = scrut.data;
       uint8_t bi = data[i];
-      uint32_t uu____198 = out[0U];
-      uint32_t uu____197 = uu____198 << (uint32_t)8U;
-      uint32_t uu____196 = uu____197 + (uint32_t)bi;
-      out[0U] = uu____196;
+      uint32_t lo = (uint32_t)bi;
+      uint32_t uu____229 = out[0U];
+      uint32_t hi = uu____229 << (uint32_t)8U;
+      uint32_t res = hi | lo;
+      out[0U] = res;
     }
     return true;
   }
@@ -53,8 +42,8 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
   {
     CBS_cbs_t scrut = cbs0;
     uint8_t *data = scrut.data;
-    uint8_t uu____248 = data[0U];
-    out[0U] = uu____248;
+    uint8_t uu____281 = data[0U];
+    out[0U] = uu____281;
     return true;
   }
   else

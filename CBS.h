@@ -15,11 +15,7 @@ typedef struct
 }
 CBS_cbs_t;
 
-bool CBS_uu___is_MkCBS(CBS_cbs_t projectee);
-
-uint8_t *CBS___proj__MkCBS__item__data(CBS_cbs_t projectee);
-
-uint32_t CBS___proj__MkCBS__item__len(CBS_cbs_t projectee);
+uint8_t FStar_Seq_Properties_last__uint8_t(void *s);
 
 bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num);
 
