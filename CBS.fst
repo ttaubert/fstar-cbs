@@ -101,13 +101,20 @@ let cbs_get_u16 cbs out =
   ) in
   pop_frame();
   rv
+*)
 
 val cbs_get_u24 :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U32.t{length out = 1} ->
   ST bool
-  (fun _ -> true)
-  (fun _ _ _ -> true)
+  (requires (fun h -> live h out /\ live h cbs /\ live h (get h cbs 0).data))
+  (ensures (fun h0 r h1 -> live h1 out /\ // modifies_1 out h0 h1 /\
+    (let cbs0 = get h0 cbs 0 in
+      // Return false if there aren't enough bytes.
+      r == (U32.v cbs0.len > 2) //\
+      // If there are, check the result.
+      //(not(r) \/ U8.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 3))
+    )))
 
 let cbs_get_u24 cbs out =
   cbs_get_u cbs out 3ul
@@ -116,9 +123,14 @@ val cbs_get_u32 :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U32.t{length out = 1} ->
   ST bool
-  (fun _ -> true)
-  (fun _ _ _ -> true)
+  (requires (fun h -> live h out /\ live h cbs /\ live h (get h cbs 0).data))
+  (ensures (fun h0 r h1 -> live h1 out /\ // modifies_1 out h0 h1 /\
+    (let cbs0 = get h0 cbs 0 in
+      // Return false if there aren't enough bytes.
+      r == (U32.v cbs0.len > 3) //\
+      // If there are, check the result.
+      //(not(r) \/ U8.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 4))
+    )))
 
 let cbs_get_u32 cbs out =
   cbs_get_u cbs out 4ul
-*)

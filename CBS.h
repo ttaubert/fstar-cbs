@@ -20,4 +20,8 @@ uint8_t FStar_Seq_Properties_last__uint8_t(void *s);
 bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num);
 
 bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out);
+
+bool CBS_cbs_get_u24(CBS_cbs_t *cbs, uint32_t *out);
+
+bool CBS_cbs_get_u32(CBS_cbs_t *cbs, uint32_t *out);
 #endif

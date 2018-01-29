@@ -49,3 +49,13 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
     return false;
 }
 
+bool CBS_cbs_get_u24(CBS_cbs_t *cbs, uint32_t *out)
+{
+  return CBS_cbs_get_u(cbs, out, (uint32_t)3U);
+}
+
+bool CBS_cbs_get_u32(CBS_cbs_t *cbs, uint32_t *out)
+{
+  return CBS_cbs_get_u(cbs, out, (uint32_t)4U);
+}
+
