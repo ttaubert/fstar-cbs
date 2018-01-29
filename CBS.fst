@@ -30,7 +30,7 @@ let rec big_endian (b:seq U8.t) : Tot (n:nat) (decreases (Seq.length b)) =
 
 val cbs_get_u :
   cbs: buffer cbs_t{length cbs = 1} ->
-  out: buffer U32.t{length out = 1 /\ disjoint cbs out} -> // TODO disjoint
+  out: buffer U32.t{length out = 1} ->
   num: U32.t{U32.(v num > 0 /\ v num < 5)} ->
   ST bool
   (requires (fun h -> live h out /\ live h cbs /\ live h (get h cbs 0).data))
@@ -39,7 +39,7 @@ val cbs_get_u :
       // Return false if there aren't enough bytes.
       r == U32.(v cbs0.len >= v num) //\
       // If there are, check the result.
-      //(~r \/ U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 (U32.v num)))
+      //(r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 (U32.v num)))
     )))
 
 let cbs_get_u cbs out num =
@@ -70,7 +70,7 @@ val cbs_get_u8 :
       // Return false if there aren't enough bytes.
       r == (U32.v cbs0.len > 0) /\
       // If there are, the result will be cbs->data[0].
-      (~r \/ U8.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 1))
+      (r ==> U8.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 1))
     )))
 
 let cbs_get_u8 cbs out =
@@ -84,7 +84,7 @@ let cbs_get_u8 cbs out =
 
 val cbs_get_u16 :
   cbs: buffer cbs_t{length cbs = 1} ->
-  out: buffer U16.t{length out = 1 /\ disjoint cbs out} -> // TODO disjoint
+  out: buffer U16.t{length out = 1} ->
   ST bool
   (requires (fun h -> live h out /\ live h cbs /\ live h (get h cbs 0).data))
   (ensures (fun h0 r h1 -> live h1 out /\ //\ modifies_1 out h0 h1
@@ -92,7 +92,7 @@ val cbs_get_u16 :
       // Return false if there aren't enough bytes.
       r == (U32.v cbs0.len > 1) //\
       // If there are, check the result.
-      //(~r \/ U8.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 2))
+      //(r ==> U16.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 2))
     )))
 
 let cbs_get_u16 cbs out =
@@ -106,7 +106,7 @@ let cbs_get_u16 cbs out =
 
 val cbs_get_u24 :
   cbs: buffer cbs_t{length cbs = 1} ->
-  out: buffer U32.t{length out = 1 /\ disjoint cbs out} -> // TODO disjoint
+  out: buffer U32.t{length out = 1} ->
   ST bool
   (requires (fun h -> live h out /\ live h cbs /\ live h (get h cbs 0).data))
   (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
@@ -114,7 +114,7 @@ val cbs_get_u24 :
       // Return false if there aren't enough bytes.
       r == (U32.v cbs0.len > 2) //\
       // If there are, check the result.
-      //(~r \/ U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 3))
+      //(r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 3))
     )))
 
 let cbs_get_u24 cbs out =
@@ -122,7 +122,7 @@ let cbs_get_u24 cbs out =
 
 val cbs_get_u32 :
   cbs: buffer cbs_t{length cbs = 1} ->
-  out: buffer U32.t{length out = 1 /\ disjoint cbs out} -> // TODO disjoint
+  out: buffer U32.t{length out = 1} ->
   ST bool
   (requires (fun h -> live h out /\ live h cbs /\ live h (get h cbs 0).data))
   (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
@@ -130,7 +130,7 @@ val cbs_get_u32 :
       // Return false if there aren't enough bytes.
       r == (U32.v cbs0.len > 3) //\
       // If there are, check the result.
-      //(~r \/ U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 4))
+      //(r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 4))
     )))
 
 let cbs_get_u32 cbs out =
