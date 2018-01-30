@@ -6,6 +6,8 @@ open FStar.HyperStack.ST
 open FStar.Buffer
 open FStar.Mul
 
+module ST = FStar.HyperStack.ST
+
 module U8 = FStar.UInt8
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
@@ -21,8 +23,7 @@ let u8_to_u32 n = FStar.Int.Cast.uint8_to_uint32 n
 [@ "substitute"] private
 let u32_to_u16 n = FStar.Int.Cast.uint32_to_uint16 n
 
-// TODO move to CBS.Spec ?
-private
+private // TODO move to CBS.Spec ?
 let rec big_endian (b:seq U8.t) : Tot (n:nat) (decreases (Seq.length b)) =
   let open FStar.Seq in
     if length b = 0 then 0
@@ -44,7 +45,7 @@ val cbs_get_u :
 
 let cbs_get_u cbs out num =
   let cbs0 = cbs.(0ul) in
-  let h0 = FStar.HyperStack.ST.get() in
+  let h0 = ST.get() in
   if U32.(cbs0.len >=^ num) then (
     let inv = (fun h _ -> live h out /\ live h cbs0.data /\ modifies_1 out h0 h) in
     let f (i:U32.t{U32.(v 0ul <= v i /\ v i < v num)}) :
@@ -87,7 +88,7 @@ val cbs_get_u16 :
   out: buffer U16.t{length out = 1} ->
   ST bool
   (requires (fun h -> live h out /\ live h cbs /\ live h (get h cbs 0).data))
-  (ensures (fun h0 r h1 -> live h1 out /\ //\ modifies_1 out h0 h1
+  (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
       r == (U32.v cbs0.len > 1) //\
@@ -100,8 +101,8 @@ let cbs_get_u16 cbs out =
   let num = Buffer.createL [ 0ul ] in
   let rv = cbs_get_u cbs num 2ul in
   let num0 = num.(0ul) in
-  pop_frame();
   out.(0ul) <- u32_to_u16 num0;
+  pop_frame ();
   rv
 
 val cbs_get_u24 :
