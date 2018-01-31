@@ -46,7 +46,10 @@ val cbs_get_u :
       // Return false if there aren't enough bytes.
       r == U32.(v cbs0.len >= v num) /\
       // If there are, check the result.
-      (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 (U32.v num))) // TODO
+      // TODO make this a function
+      (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 (U32.v num))) /\
+      // The result must be < 2^(num * 8).
+      (r ==> U32.v (get h1 out 0) < pow2 (U32.v num * 8))
     )))
 
 let cbs_get_u cbs out num =
@@ -66,6 +69,7 @@ let cbs_get_u cbs out num =
         let lo = u8_to_u32 bi in
         Math.Lemmas.pow2_plus 8 8;
         Math.Lemmas.pow2_plus 8 16;
+        Math.Lemmas.pow2_plus 8 24;
         let hi = U32.(out.(0ul) <<^ 8ul) in
         UInt.logor_disjoint #32 (U32.v hi) (U32.v lo) 8;
         out.(0ul) <- U32.(hi |^ lo)
@@ -131,7 +135,6 @@ let cbs_get_u16 cbs out =
 
 
 // bool cbs_get_u24(cbs_t *cbs, uint32_t *out)
-// TODO check that it's always < pow2 24
 val cbs_get_u24 :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U32.t{length out = 1 /\ disjoint out cbs} ->
@@ -145,6 +148,8 @@ val cbs_get_u24 :
       r == (U32.v cbs0.len > 2) /\
       // If there are, check the result.
       (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 3))
+      // The result must be < 2^24.
+      /\ (r ==> U32.v (get h1 out 0) < pow2 24)
     )))
 
 let cbs_get_u24 cbs out =
