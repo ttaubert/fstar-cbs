@@ -16,9 +16,11 @@ module ST = FStar.HyperStack.ST
 private
 noeq type cbs_t = | MkCBS: data:(buffer U8.t) -> len:U32.t{U32.v len == length data} -> cbs_t
 
+// TODO remove `n` ?
 [@ "substitute"] private
 let u8_to_u32 n = FStar.Int.Cast.uint8_to_uint32 n
 
+// TODO remove `n` ?
 [@ "substitute"] private
 let u32_to_u16 n = FStar.Int.Cast.uint32_to_uint16 n
 
@@ -32,7 +34,7 @@ let rec big_endian (b:seq U8.t) : Tot (n:nat) (decreases (Seq.length b)) =
 
 
 // bool cbs_get_u(cbs_t *cbs, uint32_t *out, uint32_t num)
-// TODO check that num < 5
+// TODO check that 0 <= num < 5
 val cbs_get_u :
   cbs: buffer cbs_t{length cbs = 1} -> // TODO cbs_p ?
   out: buffer U32.t{length out = 1 /\ disjoint out cbs} -> // TODO uint32_p ?
