@@ -16,8 +16,8 @@ bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
       uint8_t *data = scrut.data;
       uint8_t bi = data[i];
       uint32_t lo = (uint32_t)bi;
-      uint32_t uu____216 = out[0U];
-      uint32_t hi = uu____216 << (uint32_t)8U;
+      uint32_t uu____311 = out[0U];
+      uint32_t hi = uu____311 << (uint32_t)8U;
       out[0U] = hi | lo;
     }
     return true;
@@ -35,8 +35,8 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
   {
     CBS_cbs_t scrut = cbs0;
     uint8_t *data = scrut.data;
-    uint8_t uu____271 = data[0U];
-    out[0U] = uu____271;
+    uint8_t uu____365 = data[0U];
+    out[0U] = uu____365;
     return true;
   }
   else
