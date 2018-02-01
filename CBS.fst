@@ -52,20 +52,22 @@ val cbs_get_u :
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
       r == U32.(v cbs0.len >= v num) /\
-      // If there are, check the result.
-      (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 (U32.v num))) /\
       // The result must be < 2^(num * 8).
-      (r ==> U32.v (get h1 out 0) < pow2 (U32.v num * 8)) // TODO formatting
+      (r ==> U32.v (get h1 out 0) < pow2 (U32.v num * 8)) /\
+      // If there are, check the result.
+      (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 (U32.v num)))
     )))
 
 let cbs_get_u cbs out num =
   let cbs0 = cbs.(0ul) in
   let h0 = ST.get() in
   if U32.(cbs0.len >=^ num) then (
-    let inv = (fun h i -> live h out /\ live h cbs0.data /\ modifies_1 out h0 h
-      /\ 0 <= i /\ i <= U32.v num // TODO comments, functions?
-      /\ U32.v (get h out 0) < pow2 (i * 8)
-      /\ U32.v (get h out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 i)
+    let inv = (fun h i -> live h out /\ live h cbs0.data /\ modifies_1 out h0 h /\
+      0 <= i /\ i <= U32.v num /\
+      // Current value must be < 2^(i * 8).
+      U32.v (get h out 0) < pow2 (i * 8) /\
+      // Current value must agree with `big_endian` result.
+      U32.v (get h out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 i)
     ) in
     let f (i:U32.t{U32.(v 0ul <= v i /\ v i < v num)}) :
       Stack unit
@@ -149,7 +151,7 @@ val cbs_get_u24 :
       // If there are, check the result.
       (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 3)) /\
       // The result must be < 2^24.
-      (r ==> U32.v (get h1 out 0) < pow2 24) // TODO formatting
+      (r ==> U32.v (get h1 out 0) < pow2 24)
     )))
 
 let cbs_get_u24 cbs out =

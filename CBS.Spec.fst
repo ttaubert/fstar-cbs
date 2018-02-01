@@ -39,17 +39,16 @@ val lemma_big_endian_0: (b:seq U8.t) -> Lemma
 let lemma_big_endian_0 b = ()
 
 
-// Ensure that big_endian always returns a number
+// Ensure that `big_endian` always returns a number
 // smaller than 2^(n*8) for a sequence of length n.
 private
-val lemma_big_endian_bounds: (b:seq U8.t) -> Lemma
-  (ensures (big_endian b < pow2 (length b * 8)))
-  (decreases (length b))
-  [SMTPat (big_endian b < pow2 (length b * 8))]
-let rec lemma_big_endian_bounds b =
-  let len = length b in
-    if len > 0 then (
-      lemma_big_endian_bounds (slice b 0 (len - 1));
-      Math.Lemmas.pow2_minus (len * 8) ((len - 1) * 8);
-      ()
-    )
+val lemma_big_endian_bounds: (b:seq U8.t) -> (n:nat{n <= length b}) -> Lemma
+  (ensures (big_endian (slice b 0 n) < pow2 (n * 8)))
+  (decreases (n))
+  [SMTPat (big_endian (slice b 0 n) < pow2 (n * 8))]
+let rec lemma_big_endian_bounds b n =
+  if n > 0 then (
+    lemma_big_endian_bounds b (n - 1);
+    Math.Lemmas.pow2_minus (n * 8) ((n - 1) * 8);
+    ()
+  )
