@@ -2,13 +2,6 @@
 
 #include "CBS.h"
 
-uint8_t FStar_Seq_Properties_last__uint8_t(void *s)
-{
-  return
-    FStar_Seq_Base_index(s,
-      Prims_op_Subtraction(FStar_Seq_Base_length(s), (krml_checked_int_t)1));
-}
-
 bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
 {
   CBS_cbs_t cbs0 = cbs[0U];
@@ -23,8 +16,8 @@ bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
       uint8_t *data = scrut.data;
       uint8_t bi = data[i];
       uint32_t lo = (uint32_t)bi;
-      uint32_t uu____227 = out[0U];
-      uint32_t hi = uu____227 << (uint32_t)8U;
+      uint32_t uu____216 = out[0U];
+      uint32_t hi = uu____216 << (uint32_t)8U;
       out[0U] = hi | lo;
     }
     return true;
@@ -42,8 +35,8 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
   {
     CBS_cbs_t scrut = cbs0;
     uint8_t *data = scrut.data;
-    uint8_t uu____282 = data[0U];
-    out[0U] = uu____282;
+    uint8_t uu____271 = data[0U];
+    out[0U] = uu____271;
     return true;
   }
   else

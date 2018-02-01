@@ -6,31 +6,25 @@ open FStar.HyperStack.ST
 open FStar.Buffer
 open FStar.Mul
 
+open CBS.Spec
+
 module U8 = FStar.UInt8
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module ST = FStar.HyperStack.ST
 
+
 #reset-options "--max_fuel 5 --z3rlimit 100"
+
 
 private
 noeq type cbs_t = | MkCBS: data:(buffer U8.t) -> len:U32.t{U32.v len == length data} -> cbs_t
 
-// TODO remove `n` ?
-[@ "substitute"] private
+private inline_for_extraction
 let u8_to_u32 n = FStar.Int.Cast.uint8_to_uint32 n
 
-// TODO remove `n` ?
-[@ "substitute"] private
+private inline_for_extraction
 let u32_to_u16 n = FStar.Int.Cast.uint32_to_uint16 n
-
-
-// TODO get rid of seq.last
-private // TODO move to CBS.Spec ?
-let rec big_endian (b:seq U8.t) : Tot (n:nat) (decreases (Seq.length b)) =
-  let open FStar.Seq in
-    if length b = 0 then 0
-    else U8.v (last b) + pow2 8 * big_endian (slice b 0 (length b - 1))
 
 
 // bool cbs_get_u(cbs_t *cbs, uint32_t *out, uint32_t num)
@@ -51,7 +45,7 @@ val cbs_get_u :
       // TODO make this a function
       (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 (U32.v num))) /\
       // The result must be < 2^(num * 8).
-      (r ==> U32.v (get h1 out 0) < pow2 (U32.v num * 8))
+      (r ==> U32.v (get h1 out 0) < pow2 (U32.v num * 8)) // TODO formatting
     )))
 
 let cbs_get_u cbs out num =
@@ -127,12 +121,12 @@ val cbs_get_u16 :
     )))
 
 let cbs_get_u16 cbs out =
-  push_frame ();
+  (**) push_frame ();
   let num = Buffer.createL [ 0ul ] in
   let rv = cbs_get_u cbs num 2ul in
   let num0 = num.(0ul) in
   out.(0ul) <- u32_to_u16 num0;
-  pop_frame ();
+  (**) pop_frame ();
   rv
 
 
@@ -151,7 +145,7 @@ val cbs_get_u24 :
       // If there are, check the result.
       (r ==> U32.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 3))
       // The result must be < 2^24.
-      /\ (r ==> U32.v (get h1 out 0) < pow2 24)
+      /\ (r ==> U32.v (get h1 out 0) < pow2 24) // TODO formatting
     )))
 
 let cbs_get_u24 cbs out =
