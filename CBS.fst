@@ -13,12 +13,16 @@ module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module ST = FStar.HyperStack.ST
 
-
 #reset-options "--max_fuel 5 --z3rlimit 100"
 
 
-private // TODO describe
-noeq type cbs_t = | MkCBS: data:(buffer U8.t) -> len:U32.t{U32.v len == length data} -> cbs_t
+// typedef struct {
+//   uint8_t *data;
+//   uint32_t len;
+// } cbs_t;
+private noeq
+type cbs_t = | MkCBS: data:(buffer U8.t) -> len:U32.t{U32.v len == length data} -> cbs_t
+  (* {data:buffer U8.t; len:U32.t} *)
 
 private inline_for_extraction
 let u8_to_u32 n = FStar.Int.Cast.uint8_to_uint32 n
@@ -44,14 +48,13 @@ let cbs_precond cbs out = fun h ->
 val cbs_get_u :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U32.t{length out = 1} ->
-  // TODO check that 0 <= num < 5
-  num: U32.t{U32.(v num > 0 /\ v num < 5)} ->
+  num: U32.t ->
   ST bool
   (requires (cbs_precond cbs out))
   (ensures (fun h0 r h1 -> live h0 out /\ live h1 out /\ modifies_1 out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
-      // Return false if there aren't enough bytes.
-      r == U32.(v cbs0.len >= v num) /\
+      // Return false if there aren't enough bytes, or num is out of range.
+      r == U32.(v cbs0.len >= v num && v num > 0 && v num < 5) /\
       // The result must be < 2^(num * 8).
       (r ==> U32.v (get h1 out 0) < pow2 (U32.v num * 8)) /\
       // If there are, check the result.
@@ -61,7 +64,8 @@ val cbs_get_u :
 let cbs_get_u cbs out num =
   let cbs0 = cbs.(0ul) in
   let h0 = ST.get() in
-  if U32.(cbs0.len >=^ num) then (
+  // Check that `num` is in the allowed range.
+  if U32.(num >^ 0ul && num <^ 5ul && cbs0.len >=^ num) then (
     let inv = (fun h i -> live h out /\ live h cbs0.data /\ modifies_1 out h0 h /\
       0 <= i /\ i <= U32.v num /\
       // Current value must be < 2^(i * 8).
