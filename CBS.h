@@ -7,6 +7,8 @@
 
 
 
+typedef uint8_t *CBS_uint8_p;
+
 typedef struct 
 {
   uint8_t *data;
@@ -15,6 +17,8 @@ typedef struct
 CBS_cbs_t;
 
 bool CBS_cbs_skip(CBS_cbs_t *cbs, uint32_t num);
+
+bool CBS_cbs_get(CBS_cbs_t *cbs, uint8_t **out, uint32_t num);
 
 bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num);
 

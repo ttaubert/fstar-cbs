@@ -15,6 +15,8 @@ module ST = FStar.HyperStack.ST
 
 #reset-options "--max_fuel 5 --z3rlimit 100"
 
+private
+let uint8_p : Type0 = b:buffer U8.t{length b < pow2 32}
 
 // typedef struct {
 //   uint8_t *data;
@@ -22,7 +24,7 @@ module ST = FStar.HyperStack.ST
 // } cbs_t;
 private noeq
 type cbs_t = | MkCBS: (* {data:buffer U8.t; len:U32.t} *)
-  data: buffer U8.t{length data < pow2 32} ->
+  data: uint8_p ->
   len: U32.t{U32.v len == length data} ->
   cbs_t
 
@@ -33,23 +35,13 @@ private inline_for_extraction
 let u32_to_u16 n = FStar.Int.Cast.uint32_to_uint16 n
 
 
-// Generic pre-conditions for `cbs_*` functions.
-[@ "substitute"] private
-let cbs_precond cbs = fun h ->
-  // `cbs` should be a normal pointer.
-  length cbs = 1 /\ (let data = (get h cbs 0).data in (
-    // Ensure that `cbs_t *cbs`, and `cbs->data` are live and don't intersect.
-    live h cbs /\ live h data /\ disjoint cbs data
-  ))
-
-
 // bool cbs_skip(cbs_t *cbs, uint32_t num)
 val cbs_skip :
   cbs: buffer cbs_t{length cbs = 1} ->
   num: U32.t{U32.v num < pow2 32} ->
   ST bool
-  (requires (fun h -> cbs_precond cbs h))
-  (ensures (fun h0 r h1 -> live h1 cbs /\ modifies_1 cbs h0 h1 /\
+  (requires (fun h -> live h cbs))
+  (ensures (fun h0 r h1 -> modifies_1 cbs h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
       r == U32.(v cbs0.len >= v num) /\
@@ -69,6 +61,39 @@ let cbs_skip cbs num =
     cbs.(0ul) <- MkCBS (offset cbs0.data num) U32.(len -^ num);
     let cbs0' = cbs.(0ul) in assert U32.(cbs0.len == cbs0'.len +^ num);
     true
+  ) else (
+    false
+  )
+
+
+// bool cbs_get(cbs_t *cbs, uint8_t **out, uint32_t num)
+val cbs_get :
+  cbs: buffer cbs_t{length cbs = 1} ->
+  out: buffer uint8_p{length out = 1} ->
+  num: U32.t{U32.v num < pow2 32} ->
+  ST bool
+  (requires (fun h -> live h cbs /\ live h out /\ disjoint cbs out))
+  (ensures (fun h0 r h1 -> modifies_2 cbs out h0 h1 /\
+    (let cbs0 = get h0 cbs 0 in
+      // Return false if there aren't enough bytes.
+      r == U32.(v cbs0.len >= v num) /\
+      // Ensure `out` is a subset of the original area.
+      (r ==> includes cbs0.data (get h1 out 0)) /\
+      // Ensure that `out` is of length `num` bytes.
+      (r ==> length (get h1 out 0) == U32.v num) /\
+      // Ensure `cbs->data` == `*out`.
+      (r ==> idx cbs0.data == idx (get h1 out 0)) /\
+      // Ensure we skipped `num` bytes.
+      (r ==> idx (get h1 cbs 0).data == idx (get h1 out 0) + U32.v num)
+    )
+  ))
+
+let cbs_get cbs out num =
+  let cbs0 = cbs.(0ul) in
+  let len = cbs0.len in
+  if U32.(len >=^ num) then (
+    out.(0ul) <- sub cbs0.data 0ul num;
+    cbs_skip cbs num
   ) else (
     false
   )
@@ -139,7 +164,7 @@ let cbs_get_u cbs out num =
 // bool cbs_get_u8(cbs_t *cbs, uint8_t *out)
 val cbs_get_u8 :
   cbs: buffer cbs_t{length cbs = 1} ->
-  out: buffer U8.t{length out = 1} ->
+  out: uint8_p{length out = 1} ->
   ST bool
   (requires (cbs_out_precond cbs out))
   (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
