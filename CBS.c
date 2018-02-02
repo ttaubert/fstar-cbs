@@ -2,6 +2,23 @@
 
 #include "CBS.h"
 
+bool CBS_cbs_skip(CBS_cbs_t *cbs, uint32_t num)
+{
+  CBS_cbs_t cbs0 = cbs[0U];
+  CBS_cbs_t scrut0 = cbs0;
+  uint32_t len = scrut0.len;
+  uint32_t len0 = len;
+  if (len0 >= num)
+  {
+    CBS_cbs_t scrut = cbs0;
+    uint8_t *data = scrut.data;
+    cbs[0U] = ((CBS_cbs_t){ .data = data + num, .len = len0 - num });
+    return true;
+  }
+  else
+    return false;
+}
+
 bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
 {
   CBS_cbs_t cbs0 = cbs[0U];
@@ -16,8 +33,8 @@ bool CBS_cbs_get_u(CBS_cbs_t *cbs, uint32_t *out, uint32_t num)
       uint8_t *data = scrut.data;
       uint8_t bi = data[i];
       uint32_t lo = (uint32_t)bi;
-      uint32_t uu____307 = out[0U];
-      uint32_t hi = uu____307 << (uint32_t)8U;
+      uint32_t uu____431 = out[0U];
+      uint32_t hi = uu____431 << (uint32_t)8U;
       out[0U] = hi | lo;
     }
     return true;
@@ -35,8 +52,8 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
   {
     CBS_cbs_t scrut = cbs0;
     uint8_t *data = scrut.data;
-    uint8_t uu____361 = data[0U];
-    out[0U] = uu____361;
+    uint8_t uu____485 = data[0U];
+    out[0U] = uu____485;
     return true;
   }
   else

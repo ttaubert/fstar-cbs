@@ -21,8 +21,10 @@ module ST = FStar.HyperStack.ST
 //   uint32_t len;
 // } cbs_t;
 private noeq
-type cbs_t = | MkCBS: data:(buffer U8.t) -> len:U32.t{U32.v len == length data} -> cbs_t
-  (* {data:buffer U8.t; len:U32.t} *)
+type cbs_t = | MkCBS: (* {data:buffer U8.t; len:U32.t} *)
+  data: buffer U8.t{length data < pow2 32} ->
+  len: U32.t{U32.v len == length data} ->
+  cbs_t
 
 private inline_for_extraction
 let u8_to_u32 n = FStar.Int.Cast.uint8_to_uint32 n
@@ -31,12 +33,52 @@ private inline_for_extraction
 let u32_to_u16 n = FStar.Int.Cast.uint32_to_uint16 n
 
 
-// Generic function used to specify pre-conditions for `cbs_get_u*` functions.
+// Generic pre-conditions for `cbs_*` functions.
 [@ "substitute"] private
-let cbs_precond cbs out = fun h ->
+let cbs_precond cbs = fun h ->
+  // `cbs` should be a normal pointer.
+  length cbs = 1 /\ (let data = (get h cbs 0).data in (
+    // Ensure that `cbs_t *cbs`, and `cbs->data` are live and don't intersect.
+    live h cbs /\ live h data /\ disjoint cbs data
+  ))
+
+
+// bool cbs_skip(cbs_t *cbs, uint32_t num)
+val cbs_skip :
+  cbs: buffer cbs_t{length cbs = 1} ->
+  num: U32.t{U32.v num < pow2 32} ->
+  ST bool
+  (requires (fun h -> cbs_precond cbs h))
+  (ensures (fun h0 r h1 -> live h1 cbs /\ modifies_1 cbs h0 h1 /\
+    (let cbs0 = get h0 cbs 0 in
+      // Return false if there aren't enough bytes.
+      r == U32.(v cbs0.len >= v num) /\
+      // Ensure the result is a subset of the original area.
+      (r ==> includes cbs0.data (get h1 cbs 0).data) /\
+      // Ensure that the length was reduced by `num` bytes.
+      (r ==> length (get h1 cbs 0).data == U32.(v cbs0.len - v num)) /\
+      // Ensure we actually skipped `num` bytes.
+      (r ==> idx cbs0.data + U32.v num == idx (get h1 cbs 0).data)
+    )
+  ))
+
+let cbs_skip cbs num =
+  let cbs0 = cbs.(0ul) in
+  let len = cbs0.len in
+  if U32.(len >=^ num) then (
+    cbs.(0ul) <- MkCBS (offset cbs0.data num) U32.(len -^ num);
+    assert (let cbs0' = cbs.(0ul) in U32.(cbs0.len == cbs0'.len +^ num));
+    true
+  ) else (
+    false
+  )
+
+
+// Generic pre-conditions for `cbs_get_u*` functions.
+[@ "substitute"] private
+let cbs_out_precond cbs out = fun h ->
   // `cbs` and `out` should be normal pointers.
-  length cbs = 1 /\ length out = 1 /\
-  (let data = (get h cbs 0).data in (
+  length cbs = 1 /\ length out = 1 /\ (let data = (get h cbs 0).data in (
     // Ensure that `cbs_t *cbs`, `cbs->data`, and `uintX_t *out` are live.
     live h cbs /\ live h data /\ live h out /\
     // Ensure that none of the above memory areas intersect.
@@ -48,9 +90,9 @@ let cbs_precond cbs out = fun h ->
 val cbs_get_u :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U32.t{length out = 1} ->
-  num: U32.t ->
+  num: U32.t{U32.v num < pow2 32} ->
   ST bool
-  (requires (cbs_precond cbs out))
+  (requires (cbs_out_precond cbs out))
   (ensures (fun h0 r h1 -> live h0 out /\ live h1 out /\ modifies_1 out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes, or num is out of range.
@@ -99,7 +141,7 @@ val cbs_get_u8 :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U8.t{length out = 1} ->
   ST bool
-  (requires (cbs_precond cbs out))
+  (requires (cbs_out_precond cbs out))
   (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
@@ -123,7 +165,7 @@ val cbs_get_u16 :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U16.t{length out = 1} ->
   ST bool
-  (requires (cbs_precond cbs out))
+  (requires (cbs_out_precond cbs out))
   (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
@@ -147,7 +189,7 @@ val cbs_get_u24 :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U32.t{length out = 1} ->
   ST bool
-  (requires (cbs_precond cbs out))
+  (requires (cbs_out_precond cbs out))
   (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
@@ -167,7 +209,7 @@ val cbs_get_u32 :
   cbs: buffer cbs_t{length cbs = 1} ->
   out: buffer U32.t{length out = 1} ->
   ST bool
-  (requires (cbs_precond cbs out))
+  (requires (cbs_out_precond cbs out))
   (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
