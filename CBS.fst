@@ -67,7 +67,7 @@ let cbs_skip cbs num =
   let len = cbs0.len in
   if U32.(len >=^ num) then (
     cbs.(0ul) <- MkCBS (offset cbs0.data num) U32.(len -^ num);
-    assert (let cbs0' = cbs.(0ul) in U32.(cbs0.len == cbs0'.len +^ num));
+    let cbs0' = cbs.(0ul) in assert U32.(cbs0.len == cbs0'.len +^ num);
     true
   ) else (
     false
