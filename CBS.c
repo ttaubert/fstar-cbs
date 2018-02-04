@@ -71,7 +71,7 @@ bool CBS_cbs_get_u8(CBS_cbs_t *cbs, uint8_t *out)
     uint8_t *data = scrut.data;
     uint8_t uu____542 = data[0U];
     out[0U] = uu____542;
-    return true;
+    return CBS_cbs_skip(cbs, (uint32_t)1U);
   }
   else
     return false;

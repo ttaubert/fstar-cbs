@@ -167,19 +167,25 @@ val cbs_get_u8 :
   out: uint8_p{length out = 1} ->
   ST bool
   (requires (cbs_out_precond cbs out))
-  (ensures (fun h0 r h1 -> live h1 out /\ modifies_1 out h0 h1 /\
+  (ensures (fun h0 r h1 -> live h1 out /\ modifies_2 cbs out h0 h1 /\
     (let cbs0 = get h0 cbs 0 in
       // Return false if there aren't enough bytes.
       r == (U32.v cbs0.len > 0) /\
       // If there are, the result will be cbs->data[0].
-      (r ==> U8.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 1))
+      (r ==> U8.v (get h1 out 0) == big_endian (slice (as_seq h0 cbs0.data) 0 1)) /\
+      // Ensure the result is a subset of the original area.
+      (r ==> includes cbs0.data (get h1 cbs 0).data) /\
+      // Ensure that the length was reduced by `num` bytes.
+      (r ==> length (get h1 cbs 0).data == U32.v cbs0.len - 1) /\
+      // Ensure we skipped a byte.
+      (r ==> idx cbs0.data + 1 == idx (get h1 cbs 0).data)
     )))
 
 let cbs_get_u8 cbs out =
   let cbs0 = cbs.(0ul) in
   if U32.(cbs0.len >^ 0ul) then (
     out.(0ul) <- cbs0.data.(0ul);
-    true
+    cbs_skip cbs 1ul
   ) else (
     false
   )
@@ -201,7 +207,7 @@ val cbs_get_u16 :
 
 let cbs_get_u16 cbs out =
   (**) push_frame ();
-  let num = Buffer.createL [ 0ul ] in
+  let num = createL [ 0ul ] in
   let rv = cbs_get_u cbs num 2ul in
   let num0 = num.(0ul) in
   out.(0ul) <- u32_to_u16 num0;
